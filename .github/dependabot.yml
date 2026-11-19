@@ -1,0 +1,57 @@
+# Dependabot keeps dependency PRs flowing weekly so security patches don't
+# accumulate. Groups related deps to reduce PR noise. Sensitive packages
+# (Anthropic, Clerk, Supabase, OpenAI, Next, dotenv, mysql2, tsx) are
+# pinned exactly in package.json and reviewed individually.
+#
+# Enable security updates separately in: GitHub repo → Settings → Security
+#   → Dependabot → "Dependabot security updates" = on.
+
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Group routine bumps so the inbox stays clean — but keep the
+    # security-sensitive ones ungrouped so each gets its own PR with
+    # explicit review.
+    groups:
+      types:
+        applies-to: version-updates
+        patterns:
+          - "@types/*"
+      eslint:
+        applies-to: version-updates
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+      tailwind:
+        applies-to: version-updates
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+      react-three:
+        applies-to: version-updates
+        patterns:
+          - "@react-three/*"
+          - "three"
+          - "@types/three"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"

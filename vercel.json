@@ -1,0 +1,17 @@
+{
+  "installCommand": "npm ci --ignore-scripts",
+  "crons": [
+    {
+      "path": "/api/enrichment/tick",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/engagement/rollup",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/engagement/promote-popular",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+# Socket Firewall as a CI-time install gate.
+#
+# Pattern: install Socket's firewall binary, then run `npm ci` through it.
+# Every package fetch routes through the firewall; if any dep matches a
+# Shai-Hulud-shape risk (new install scripts, young version, suspicious
+# maintainer changes, install-time network calls, obfuscation), the
+# install fails and the workflow fails → PR check fails → merge blocked.
+#
+# Runs on every PR + every push to main. On PRs the firewall sees the
+# updated lockfile; if a Dependabot bump pulls in a malicious patch, the
+# PR check goes red before you can merge it.
+#
+# Token: Settings → Secrets and variables → Actions
+#   SOCKET_SECURITY_API_TOKEN — from socket.dev → Settings → API tokens.
+#
+# Policy is configured in the Socket dashboard
+# (Project → Settings → Alert types). Default is permissive enough that
+# legitimate packages aren't blocked; tune up if you want stricter gating.
+
+name: Socket Security
+
+on:
+  # Public copy: automatic triggers removed (they need the private project's secrets).
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  socket:
+    name: Socket scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Socket Security (Action) — install firewall
+        uses: SocketDev/action@v1.3.2
+        with:
+          mode: firewall
+          socket-token: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          # No cache: we want the firewall to actually see each fetch
+          # rather than restoring node_modules from a pre-validated
+          # cache and skipping the gate entirely.
+
+      - name: Install through Socket firewall
+        # --ignore-scripts mirrors .npmrc and vercel.json; Socket sees
+        # every dep download regardless. If anything trips a critical
+        # alert, this step exits non-zero and the PR/push fails.
+        run: npm ci --ignore-scripts
