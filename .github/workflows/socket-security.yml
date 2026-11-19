@@ -42,7 +42,7 @@ jobs:
           socket-token: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           # No cache: we want the firewall to actually see each fetch
